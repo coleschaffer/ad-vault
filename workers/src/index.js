@@ -143,6 +143,17 @@ export default {
         return jsonResponse({ success: true, id });
       }
 
+      if (path === '/api/backfill-prompts' && request.method === 'POST') {
+        const { images } = await request.json();
+        if (!Array.isArray(images)) return errorResponse('images array is required');
+        let updated = 0;
+        for (const img of images) {
+          const success = await db.updateImagePrompt(env.DB, img.id, img.prompt, img.rawPrompt);
+          if (success) updated++;
+        }
+        return jsonResponse({ success: true, updated, total: images.length });
+      }
+
       if (path === '/api/delete-image' && request.method === 'POST') {
         const { id, deleteFile = true } = await request.json();
         if (!id) return errorResponse('Image ID is required');

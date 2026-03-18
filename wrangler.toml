@@ -1,6 +1,6 @@
 # Ad Vault - Cloudflare Worker with Assets
 name = "ad-vault"
-main = "src/index.js"
+main = "workers/src/index.js"
 compatibility_date = "2024-01-01"
 
 # Static Assets (works with wrangler versions upload)

@@ -177,6 +177,17 @@ export async function createImage(db, image) {
   return image.id;
 }
 
+export async function updateImagePrompt(db, id, prompt, rawPrompt) {
+  const result = await db.prepare(`
+    UPDATE images SET prompt = ?, raw_prompt = ? WHERE id = ?
+  `).bind(
+    typeof prompt === 'object' ? JSON.stringify(prompt) : (prompt || ''),
+    rawPrompt || '',
+    id
+  ).run();
+  return result.changes > 0;
+}
+
 export async function deleteImage(db, id) {
   const result = await db.prepare(`DELETE FROM images WHERE id = ?`).bind(id).run();
   return result.changes > 0;

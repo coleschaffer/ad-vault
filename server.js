@@ -123,13 +123,40 @@ app.post('/api/images', express.raw({ type: 'multipart/form-data', limit: '50mb'
 // POST /api/add-image-entry
 app.post('/api/add-image-entry', async (req, res) => {
   try {
-    const { url, tags, source } = req.body;
-    if (!url) return res.status(400).json({ error: 'URL is required' });
-    const id = crypto.randomUUID();
-    await db.createImage({ id, url, tags: tags || [], source: source || '' });
-    res.json({ success: true, id });
+    const { id, title, imageSrc, url, source, creator, prompt, rawPrompt, tags, dateAdded } = req.body;
+    if (!imageSrc && !url) return res.status(400).json({ error: 'URL or imageSrc is required' });
+    const imageId = id || crypto.randomUUID();
+    await db.createImage({
+      id: imageId,
+      title: title || '',
+      imageSrc: imageSrc || url,
+      source: source || '',
+      creator: creator || '',
+      prompt: prompt || '',
+      rawPrompt: rawPrompt || '',
+      tags: tags || [],
+      dateAdded: dateAdded || new Date().toISOString().split('T')[0]
+    });
+    res.json({ success: true, id: imageId });
   } catch (error) {
     console.error('Error adding image entry:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/backfill-prompts
+app.post('/api/backfill-prompts', async (req, res) => {
+  try {
+    const { images } = req.body;
+    if (!Array.isArray(images)) return res.status(400).json({ error: 'images array is required' });
+    let updated = 0;
+    for (const img of images) {
+      const success = await db.updateImagePrompt(img.id, img.prompt, img.rawPrompt);
+      if (success) updated++;
+    }
+    res.json({ success: true, updated, total: images.length });
+  } catch (error) {
+    console.error('Error backfilling prompts:', error);
     res.status(500).json({ error: error.message });
   }
 });
